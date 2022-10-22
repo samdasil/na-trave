@@ -49,5 +49,5 @@ model Hunch {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    @@unique([userId, gameId])
+    @@unique(fields: [userId, gameId], name: "userGameId")
 }

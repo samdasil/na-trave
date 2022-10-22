@@ -28,7 +28,12 @@ export const create = async (ctx) => {
         
         try {
             const hunch = await prisma.hunch.upsert({
-                where: { id: `${userId}${gameId}` },
+                where: { 
+                    userGameId: {
+                        userId,
+                        gameId
+                    }
+                },
                 create: { userId, gameId, homeTeamScore, awayTeamScore },
                 update: { homeTeamScore, awayTeamScore }
             })

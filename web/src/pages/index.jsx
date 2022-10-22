@@ -1,8 +1,7 @@
-import {
-    createBrowserRouter,
-    RouterProvider,
-    Route,
-} from "react-router-dom";
+import { useLocalStorage } from 'react-use'
+import { createBrowserRouter, RouterProvider, Route, } from "react-router-dom"
+
+
 import { Dashboard } from "./Dashboard";
 import { Home } from "./Home";
 import { Login } from "./Login";
@@ -27,11 +26,14 @@ const router = createBrowserRouter([
         element: <Dashboard />
     },
     {
-        path: "/profile",
+        path: "/:username",
         element: <Profile />
     }
 ]);
 
-export const Router = () => (
-    <RouterProvider router={router} />
-)
+export const Router = () => {
+
+    const [auth] = useLocalStorage('auth')
+
+    return <RouterProvider router={router} />
+}

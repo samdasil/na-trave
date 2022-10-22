@@ -26,7 +26,34 @@
 	3 - Tailwind
 
 	4 - Koa
+		~ npm install koa
+		~ npm install @koa/router
 
 	5 - PlanetScale
+		Criar conta free
+		- https://planetscale.com/
+		- criar database
+		- criar branch develop
 
 	6 - Prisma
+		~ npm install prisma 
+		~ npx prisma
+		~ npx prisma init
+
+		~ npm install @prisma/client
+		~ npx prisma generate  // toda vez que alterar o model
+		~ npx prisma db push   // subir atualizaçãpo do model para nuvem
+		~ npx prisma db seed   // rodar a alimentação do banco de dados 
+
+	Outros pacotes instalados durante o desenvolvimento
+		Instalar pacotes no Backend
+		~ npm install date-fns
+		~ npm install bcrypt
+		~ npm install jsonwebtoken
+		~ npm install dotenv-safe
+		
+		Instalar pacotes no frontend
+		~ npm install date-fns
+		~ npm install axios 
+		~ npm install formik yup
+		~ npm install react-use
