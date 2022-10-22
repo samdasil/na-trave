@@ -1,86 +1,131 @@
-import { Icon } from '~/components'
-import { Card, DateSelect } from '../../components'
+import { useEffect, useState } from 'react'
+import { useLocalStorage, useAsyncFn } from 'react-use'
+import { useNavigate, useParams } from 'react-router-dom'
+import axios from 'axios'
+import { format, formatISO } from 'date-fns'
 
-export const Profile = () => (
+import { Icon, Card, DateSelect } from '../../components'
+
+export const Profile = () => {
+
+    const params = useParams()
+
+    const navigate = useNavigate()
+
+    const [auth, setAuth] = useLocalStorage('auth', {})
     
-    <>
+    const logout = () => {
+        setAuth({})
+        navigate('/login')
+    }
 
-        <header className="bg-red-500 text-white p-4">
-            <div className="container max-w-3xl flex justify-between">
-                <img src="/img/logo/logo-fundo-vinho.svg" alt="logo" className="w-28 md:w-40" />
-            </div>
-        </header>
+    const [selectedDate, setDate] = useState(formatISO(new Date(2022, 10, 20)))
 
-        <main className='space-y-6'>
-            <section id="header" className="bg-red-500 text-white p-4">
-                <div className="container max-w-3xl space-y-2">
-                    <a href="/dashboard">
-                        <Icon name="back" className="w-10" />
-                    </a>
-                    <h3 className='text-2xl font-bold'>Sammy Silva</h3>
+    const [{ value: user, loading, error }, fetchHunches] = useAsyncFn(async () => {
+        const res = await axios({
+            method: 'get',
+            baseURL: import.meta.env.VITE_API_URL,
+            url: `/${params.username}`
+        })
+
+        const hunches = res.data.hunches.reduce((acc, hunch) => {
+            acc[hunch.gameId] = hunch
+            return acc
+        }, {})
+
+        return {
+            ...res.data,
+            hunches
+        }
+    })
+
+    
+    const [games, fetchGames] = useAsyncFn(async (params) => {
+        const res = await axios({
+            method: 'get',
+            baseURL: import.meta.env.VITE_API_URL,
+            url: '/games',
+            params
+        })
+
+        return res.data
+    })
+
+    const isLoading = games.loading || loading 
+    const hasError  = games.error || error
+    const isDone    = !isLoading && !hasError
+
+    useEffect( () => {
+        fetchHunches()
+    }, [])
+
+    useEffect( () => {
+        fetchGames({ gameTime: selectedDate })
+    }, [selectedDate])
+    
+    return (
+        
+        <>
+
+            <header className="bg-red-500 text-white">
+                <div className="container max-w-3xl flex justify-between p-4">
+                    <img src="/img/logo/logo-fundo-vinho.svg" alt="logo" className="w-28 md:w-40" />
+                    { auth?.user?.id && (
+                        <div onClick={logout} className="p-2 cursor-pointer">
+                            Sair
+                        </div>
+                    )}
                 </div>
-            </section>
+            </header>
 
-            <section id="content" className='container max-w-3xl p-4 space-y-4'>
-                
-                <h2 className="text-red-500 text-xl font-bold">Seus palpites</h2>
+            <main className='space-y-6'>
+                <section id="header" className="bg-red-500 text-white p-4">
+                    <div className="container max-w-3xl space-y-2">
+                        <a href="/dashboard">
+                            <Icon name="back" className="w-10" />
+                        </a>
+                        <h3 className='text-2xl font-bold'>{ user?.name }</h3>
+                    </div>
+                </section>
 
-                <DateSelect />
-
-                <div className='space-y-4'>
-
-                    <Card 
-                        teamA={{ slug: 'sui' }}
-                        teamB={{ slug: 'cam' }}
-                        match={
-                            { 
-                                local: 'Estádio São Januário',
-                                city:  'Cairo',
-                                time: '7:00'
-                            }
-                        }
-                    />
-
-                    <Card 
-                        teamA={{ slug: 'uru' }}
-                        teamB={{ slug: 'cor' }}
-                        match={
-                            { 
-                                local: 'Estádio São Januário',
-                                city:  'Cairo',
-                                time: '7:00'
-                            }
-                        }
-                    />
-
-                    <Card 
-                        teamA={{ slug: 'por' }}
-                        teamB={{ slug: 'gan' }}
-                        match={
-                            { 
-                                local: 'Estádio São Januário',
-                                city:  'Cairo',
-                                time: '7:00'
-                            }
-                        }
-                    />
-
-                    <Card 
-                        teamA={{ slug: 'bra' }}
-                        teamB={{ slug: 'ser' }}
-                        match={
-                            { 
-                                local: 'Estádio São Januário',
-                                city:  'Cairo',
-                                time: '7:00'
-                            }
-                        }
-                    />
+                <section id="content" className='container max-w-3xl p-4 space-y-4'>
                     
-                </div>
+                    <h2 className="text-red-500 text-xl font-bold">Seus palpites</h2>
 
-            </section>
-        </main>
+                    <DateSelect selectedDate={selectedDate} onChange={setDate} />
 
-    </>
-)
+                    <div className='space-y-4'>
+
+                        {isLoading && 'Carregando jogos...'}
+
+                        {hasError && 'Ops! Algo deu errado.'}
+
+                        {isDone && games.value?.map(game => (
+                            
+                            <Card 
+                                key={game.id}
+                                gameId={game.id}
+                                homeTeam={game.homeTeam}
+                                awayTeam={game.awayTeam}
+                                match={
+                                    { 
+                                        local: 'Estádio São Januário',
+                                        city:  'Cairo',
+                                        time:  format(new Date(game.gameTime), 'H:mm')
+                                    }
+                                }
+                                homeTeamScore={user?.hunches?.[game.id]?.homeTeamScore || ''}
+                                awayTeamScore={user?.hunches?.[game.id]?.awayTeamScore || ''}
+                                disabled={true}
+                            />
+
+                        ))}
+
+                    </div>
+
+                </section>
+            </main>
+
+        </>
+    )
+}
